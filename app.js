@@ -12,6 +12,7 @@ var express = require('express');
 
 var app = express();
 var activityLog = "";
+var newActivity = false; // global boolean, false if no new activity since last check
 
 // server connection
 
@@ -29,8 +30,6 @@ app.set('port', process.env.PORT || 3000);
 var server = http.createServer(app);
 server.listen(app.get('port'), function()
 {
-    console.log(config.password);
-    console.log(conString);
     console.log('Express server listening on port ' + app.get('port'));
 });
 
@@ -52,14 +51,58 @@ app.get('/', function(req, res)
             */
             res.write(jsonToTable(results));
             res.write(activityLog);
+            res.write("</html>");
             res.end(); // writes the user table
         }   
+    });
+});
+
+// Responds to requests for new activity
+app.get('/newActivity', function(req, res)
+{
+    if(newActivity)
+    {
+        res.write('1');
+        newActivity = false;
+    }
+    else
+    {
+        res.write('2');
+    }
+    res.end();
+});
+
+// Responds to requests for the status of a specific user
+app.get('/userStatus', function(req, res)
+{
+    console.log(req.query.name);
+    userModel.findOne({dbName: req.query.name}, function(err, user)
+    {
+        console.log('found');
+        if(err) console.log(err);
+        else if (!user)
+        {
+            res.write('out');
+        }
+        else
+        {
+            if(user.dbIn)
+            {
+                res.write('in');
+            }
+            else
+            {
+                res.write('out');
+            }
+        }
+        res.end();
     });
 });
 
 // Responds to homepage post requests sent from iOS
 app.post('/', function(req, res)
 {  
+    newActivity = true;
     res.write('responding to post request'); // sent back to iOS
     
     // parses the request data
@@ -79,18 +122,18 @@ app.post('/', function(req, res)
         if(arr[1] === '1')        
         {
             didEnter = true;
-            activityLog += time + ' ' + name + ' has entered the building. \n';
+            activityLog += time + ' ' + name + ' has entered the building. <br>';
         }
         else
         {
             didEnter = false;
-            activityLog += time + ' ' + name + ' has left the building. \n';
+            activityLog += time + ' ' + name + ' has left the building. <br>';
         }
         
         // attempts to find the user in the db
         userModel.findOne({dbName: name}, function(err, user)
         {
-           if(err) console.log(err)
+           if(err) console.log(err);
             else if (!user) // user doesn't exist, has to be created
             {
                 var temp = new userModel({dbName: name, dbTime: time, dbIn: didEnter});
@@ -116,7 +159,7 @@ app.post('/', function(req, res)
 // converts a json array to an html table
 function jsonToTable(raw) 
 {
-    var ret = "<table border = 1 cellspacing = 3 cellpadding = 5> <tr> <th>Name</th> <th>Status</th> <th>Time</th> </tr>";
+    var ret = "<html><table border = 1 cellspacing = 3 cellpadding = 5> <tr> <th>Name</th> <th>Status</th> <th>Time</th> </tr>";
     for(var i = 0; i < raw.length; i++)
     {
         ret += "<tr>";
@@ -135,5 +178,6 @@ function jsonToTable(raw)
     ret += "</table>";
     return ret;
 }
+
 
 
