@@ -19,8 +19,15 @@ var userArray =
 [
 {name: "David", status: "out", bulb: "1"},
 {name: "Eduardo", status: "out", bulb: "2"},
-{name: "Reeti", status: "out", bulb: "3"}];
+{name: "Reeti", status: "out", bulb: "3"}
+];
 
+for(var i = 0; i < userArray.length; i++)
+{
+    blink(i, 0);
+}
+
+/*
 var app = express();
 app.set('port', process.env.PORT || 3000);
 
@@ -31,6 +38,7 @@ server.listen(app.get('port'), function()
 {
 	console.log('server listening on  ' + app.get('port'));	
 });
+*/
 
 // Pings the external Node server every 5 seconds 
 // Looking to see if user status has changed
