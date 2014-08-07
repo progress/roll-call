@@ -11,19 +11,20 @@ var http = require('http');
 var express = require('express');
 
 var app = express();
-var activityLog = "";
-var newActivity = false; // global boolean, false if no new activity since last check
+var activityLog = ""; // the homepage log of entrance/exit activity
 
 // server connection
-
 var conString = 'mongodb://' + config.username + ':' + config.password 
                 + '@novus.modulusmongo.net:27017/eWizab7e';
 mongoose.connect(conString);
 var db = mongoose.connection;
 
-
+// models for the two dbs, one for app users, one for hue lightbulbs
 var userModel = mongoose.model('users', {dbName: String, dbTime: String, dbIn: Boolean});
- 
+var newBulbModel = mongoose.model('bulbs', {bulb: String, bri: String, sat: String, hue: String,
+                               outdated: Boolean, alert: String, effect: String});
+
+// Modulus uses the process.env.PORT, locally it defaults to 3000 
 app.set('port', process.env.PORT || 3000);
 
 // Creates http server
@@ -31,8 +32,25 @@ var server = http.createServer(app);
 server.listen(app.get('port'), function()
 {
     console.log('Express server listening on port ' + app.get('port'));
+}); 
+
+var auth = express.basicAuth(function(user, pass) 
+{
+    return user === 'testUser' && pass === 'testPass';
 });
 
+app.get('/test', function(req, res)
+{
+    if(req.query.pass == 'magic')
+    {
+        res.write('hello world');
+    }
+    else
+    {
+        res.write('unauthorized');
+    }
+    res.end();  
+});
 
 // Responds to homepage get requests
 app.get('/', function(req, res)
@@ -53,23 +71,89 @@ app.get('/', function(req, res)
             res.write(activityLog);
             res.write("</html>");
             res.end(); // writes the user table
+
         }   
     });
 });
 
-// Responds to requests for new activity
-app.get('/newActivity', function(req, res)
+// updates a bulb in the db using the specified parameters
+app.get('/updateBulb', function(req, res)
 {
-    if(newActivity)
+    newBulbModel.findOne({bulb: req.query.bulb}, function(err, user)
     {
-        res.write('1');
-        newActivity = false;
-    }
-    else
-    {
-        res.write('2');
-    }
+        if(err) console.log(err);
+        else if (!user) // creates a new user if one doesn't exist
+        {
+            var temp = new newBulbModel({bulb: req.query.bulb, bri: req.query.bri,
+                                      sat: req.query.sat, hue: req.query.hue,
+                                      outdated: true, alert: req.query.alert,
+                                      effect: req.query.effect});
+            temp.save(function (err, tempUser)
+            {
+                if(err) return console.error(err);
+            });
+        }
+        else // updates existing user
+        {
+            user.bulb = req.query.bulb;
+            user.bri = req.query.bri;
+            user.sat = req.query.sat;
+            user.hue = req.query.hue;
+            user.outdated = true;
+            user.alert = req.query.alert;
+            user.effect = req.query.effect;
+            user.save(function(err, tempUser)
+            {
+                if(err) console.log(err);
+            });
+        }
+    });
+    res.write('bulb updated successfully.');
     res.end();
+});
+
+// returns the status for a specified bulb
+app.get('/bulbStatus', function(req, res)
+{
+    var str = req.query.bulb;
+
+    newBulbModel.findOne({bulb: str}, function(err, user)
+    {
+        if(err) console.log(err);
+        else if (!user)
+        {
+                console.log('user not found');
+                res.write('no');
+        }
+        else
+        {
+            if(user.outdated)
+            {
+                user.outdated = false;
+                user.save(function(err, tempUser)
+                {
+                    if(err) console.log(err);
+                });
+
+                var body = 
+                {
+                    "hue": user.hue,
+                    "on": true,
+                    "bri": user.bri,
+                    "sat": user.sat,
+                    "alert": user.alert,
+                    "effect": user.effect
+                };
+                res.write(JSON.stringify(body));
+            }
+            else
+            {
+                console.log('user found, but not outdated');
+                res.write('no');
+            }
+        }
+        res.end();
+    });
 });
 
 // Responds to requests for the status of a specific user
@@ -136,6 +220,7 @@ app.post('/', function(req, res)
            if(err) console.log(err);
             else if (!user) // user doesn't exist, has to be created
             {
+                console.log(name + ' could not be found');
                 var temp = new userModel({dbName: name, dbTime: time, dbIn: didEnter});
                 temp.save(function (err, tempUser)
                 {
@@ -144,6 +229,7 @@ app.post('/', function(req, res)
             }
             else // user already exists
             {
+                console.log(name + ' updated in db');
                 user.dbTime = time;
                 user.dbIn = didEnter;
                 user.save(function (err, tempUser2)

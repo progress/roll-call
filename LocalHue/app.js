@@ -4,15 +4,11 @@
 // A node server within the Progress firewall for communicating with Hues
 
 var http = require('http');
+var https = require('https');
 var express = require('express');
 var cron = require('cron');
 
-var checkActivity =
-{
-	host: 'helloworld-20553.onmodulus.net',
-	path: '/newActivity'
-};
-
+var nBulbs = 5;
 
 // Array of users tracked by the bulbs
 var userArray = 
@@ -22,9 +18,10 @@ var userArray =
 {name: "Reeti", status: "out", bulb: "3"}
 ];
 
+// initializes the bulbs 
 for(var i = 0; i < userArray.length; i++)
 {
-    blink(i, 0);
+    blink(i, 0, 100, 250, 'none', 'none');
 }
 
 /*
@@ -50,15 +47,49 @@ new CronJob('*/5 * * * * *', function()
     {
         checkStatus(i);
     }
+    
+    for(var j = 0; j < nBulbs; j++)
+    {
+        checkBulb(j);
+    }
+    
 }, null, true);
-   
-// sets a bulb to a color then blinks it 15 times
-function blink(bulb, color)
+
+// checks if the status has changed for a bulb
+// if the status has changed, it will blink the bulb to reflect the change
+function checkBulb(bulb)
 {
+    var bulbOptions = 
+    {
+        host: 'helloworld-20553.onmodulus.net',
+        path: '/bulbStatus'
+    };
+
+    bulbOptions.path += '?bulb=' + bulb;
+    var req = http.get(bulbOptions, function(res)
+    {
+        var answer = '';
+        res.on('data', function(chunk)
+        {
+            answer += chunk;
+            console.log('answer is' + answer);
+            if(answer != 'no') // status has changed
+            {
+                var obj = JSON.parse(answer);
+                blink(bulb, parseInt(obj.hue), parseInt(obj.bri), parseInt(obj.sat), obj.alert, obj.effect);
+            }
+        });
+    });
+}
+   
+// updates various properties of a specified bulbs
+function blink(bulb, color, bri, sat, alert, effect)
+{
+    console.log('bulb number is ' + bulb);
     var options = 
     {
         host: '172.21.152.109',
-        path: '/api/newdeveloper/lights/2/state',
+        path: '',
         method: 'PUT'
     };
 
@@ -66,16 +97,17 @@ function blink(bulb, color)
     {
         "hue": color,
         "on": true,
-        "bri": 100, // brightness
-        "sat": 250, // color saturation
-        "alert": "lselect" // this is the Hue's blink syntax
+        "bri": bri, // brightness
+        "sat": sat, // color saturation
+        "alert": alert,
+        "effect": effect
     };
 
     var bodyString = JSON.stringify(body);
 
     // Philips is silly and doesn't use 0-based indexing
     options.path = '/api/newdeveloper/lights/' + (bulb + 1) + '/state';
-
+    console.log(options.path);
     // PUT request to the Hue bridge 
 	var req = http.request(options, function(res)
     {
@@ -86,7 +118,9 @@ function blink(bulb, color)
 		});
 	});
 	req.write(bodyString);
+    console.log('bodystring is ' + bodyString);
 	req.end();
+    console.log('sent request');
 }
 
 // checks the status of a specified user by pinging the external server
@@ -112,7 +146,7 @@ function checkStatus(userIndex)
             // checks if local user status matches external status
             if(answer != userArray[userIndex]["status"])
             {
-                console.log('blinking for index ' + userIndex)
+                console.log('blinking for index ' + userIndex);
                 if(answer == "in")
                 {
                     color = 25500; // green
@@ -121,7 +155,7 @@ function checkStatus(userIndex)
                 {
                     color = 0; // red
                 }  
-                blink(userIndex, color);
+                blink(userIndex, color, 100, 250, true);
                 userArray[userIndex].status = answer; // updates local status to match
             }
         });
