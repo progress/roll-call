@@ -34,24 +34,6 @@ server.listen(app.get('port'), function()
     console.log('Express server listening on port ' + app.get('port'));
 }); 
 
-var auth = express.basicAuth(function(user, pass) 
-{
-    return user === 'testUser' && pass === 'testPass';
-});
-
-app.get('/test', function(req, res)
-{
-    if(req.query.pass == 'magic')
-    {
-        res.write('hello world');
-    }
-    else
-    {
-        res.write('unauthorized');
-    }
-    res.end();  
-});
-
 // Responds to homepage get requests
 app.get('/', function(req, res)
 {
