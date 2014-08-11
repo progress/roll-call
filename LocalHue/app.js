@@ -24,19 +24,6 @@ for(var i = 0; i < userArray.length; i++)
     blink(i, 0, 100, 250, 'none', 'none');
 }
 
-/*
-var app = express();
-app.set('port', process.env.PORT || 3000);
-
-
-// Initializes http server
-var server = http.createServer(app);
-server.listen(app.get('port'), function()
-{
-	console.log('server listening on  ' + app.get('port'));	
-});
-*/
-
 // Pings the external Node server every 5 seconds 
 // Looking to see if user status has changed
 var CronJob = cron.CronJob;
@@ -72,7 +59,6 @@ function checkBulb(bulb)
         res.on('data', function(chunk)
         {
             answer += chunk;
-            console.log('answer is' + answer);
             if(answer != 'no') // status has changed
             {
                 var obj = JSON.parse(answer);
@@ -155,7 +141,7 @@ function checkStatus(userIndex)
                 {
                     color = 0; // red
                 }  
-                blink(userIndex, color, 100, 250, true);
+                blink(userIndex, color, 100, 250, "lselect", "none");
                 userArray[userIndex].status = answer; // updates local status to match
             }
         });

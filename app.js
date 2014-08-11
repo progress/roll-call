@@ -31,7 +31,7 @@ app.set('port', process.env.PORT || 3000);
 var server = http.createServer(app);
 server.listen(app.get('port'), function()
 {
-    console.log('Express server listening on port ' + app.get('port'));
+    console.log('Express server initialized on port ' + app.get('port'));
 }); 
 
 // Responds to homepage get requests
@@ -52,8 +52,7 @@ app.get('/', function(req, res)
             res.write(jsonToTable(results));
             res.write(activityLog);
             res.write("</html>");
-            res.end(); // writes the user table
-
+            res.end();
         }   
     });
 });
@@ -72,7 +71,7 @@ app.get('/updateBulb', function(req, res)
                                       effect: req.query.effect});
             temp.save(function (err, tempUser)
             {
-                if(err) return console.error(err);
+                if(err) console.log(err);
             });
         }
         else // updates existing user
@@ -98,7 +97,6 @@ app.get('/updateBulb', function(req, res)
 app.get('/bulbStatus', function(req, res)
 {
     var str = req.query.bulb;
-
     newBulbModel.findOne({bulb: str}, function(err, user)
     {
         if(err) console.log(err);
