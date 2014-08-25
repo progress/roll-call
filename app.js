@@ -3,8 +3,14 @@
 // app.js
 // A node server for communicating with iOS and MongoDB
 
-// package declarations
+// *** YOU NEED A config.json FILE FOR THIS PROJECT TO WORK ***
 var config = require('./config.json');
+// fields:
+// username: your monogodb username
+// password: your mongodb password
+// dburl: the url for the database, mine was in the form: '@example.com:port/example'
+
+// package declarations
 var mongoose = require('mongoose');
 var qs = require('querystring');
 var http = require('http');
@@ -14,8 +20,7 @@ var app = express();
 var activityLog = ""; // the homepage log of entrance/exit activity
 
 // server connection
-var conString = 'mongodb://' + config.username + ':' + config.password 
-                + '@novus.modulusmongo.net:27017/eWizab7e';
+var conString = 'mongodb://' + config.username + ':' + config.password + config.dburl;
 mongoose.connect(conString);
 var db = mongoose.connection;
 
@@ -55,6 +60,14 @@ app.get('/', function(req, res)
             res.end();
         }   
     });
+});
+
+app.get('/test', function(req, res)
+{
+    var data = {"name": "David", "id": 1234};
+    res.writeHead(200, {"Content-Type": "application/json"});
+    res.write(JSON.stringify(data));
+    res.end();
 });
 
 // updates a bulb in the db using the specified parameters
@@ -137,6 +150,8 @@ app.get('/bulbStatus', function(req, res)
 });
 
 // Responds to requests for the status of a specific user
+// parameters:
+// name: the name of the user being queried 
 app.get('/userStatus', function(req, res)
 {
     console.log(req.query.name);
@@ -164,6 +179,8 @@ app.get('/userStatus', function(req, res)
 });
 
 // Responds to homepage post requests sent from iOS
+// iOS notifies the server when a user has entered/exited the beacon region
+// This gets updated in the db
 app.post('/', function(req, res)
 {  
     newActivity = true;

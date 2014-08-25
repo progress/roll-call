@@ -3,14 +3,29 @@
 // app.js
 // A node server within the Progress firewall for communicating with Hues
 
+// *** BEFORE ANY OF THIS WILL WORK: ***
+// go to http://developers.meethue.com/gettingstarted.html
+// follow the instructions until you've authorized the username
+// set whatever username you picked to the variable below
+// if you set it to 'newdeveloper' you won't have to change the code
+var bridgeUser = 'newdeveloper';
+
+// to set up the above, you needed to find your bridges IP address
+// set this variable to your own bridge address
+var bridgeIP = '172.21.152.52';
+
 var http = require('http');
 var https = require('https');
 var express = require('express');
 var cron = require('cron');
 
+// number of bulbs talking to the bridge
+// 
 var nBulbs = 5;
 
 // Array of users tracked by the bulbs
+// Change these names if you want different names
+// to correspond to the bulbs
 var userArray = 
 [
 {name: "David", status: "out", bulb: "1"},
@@ -74,7 +89,7 @@ function blink(bulb, color, bri, sat, alert, effect)
     console.log('bulb number is ' + bulb);
     var options = 
     {
-        host: '172.21.152.109',
+        host: bridgeIP,
         path: '',
         method: 'PUT'
     };
@@ -92,7 +107,7 @@ function blink(bulb, color, bri, sat, alert, effect)
     var bodyString = JSON.stringify(body);
 
     // Philips is silly and doesn't use 0-based indexing
-    options.path = '/api/newdeveloper/lights/' + (bulb + 1) + '/state';
+    options.path = '/api/' + bridgeUser + '/lights/' + (bulb + 1) + '/state';
     console.log(options.path);
     // PUT request to the Hue bridge 
 	var req = http.request(options, function(res)
