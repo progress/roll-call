@@ -1,7 +1,7 @@
-// David Inglis
-// Progress Software - July 2014
-// app.js
-// A node server for communicating with iOS and MongoDB
+//  Copyright 2014 © Progress Software
+//  Contributor: David Inglis
+//  app.js
+//  A node server for communicating with iOS and MongoDB
 
 // *** YOU NEED A config.json FILE FOR THIS PROJECT TO WORK ***
 var config = require('./config.json');

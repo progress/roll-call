@@ -1,7 +1,7 @@
-// David Inglis
-// Progress Software - July 2014
-// app.js
-// A node server within the Progress firewall for communicating with Hues
+//  Copyright 2014 © Progress Software
+//  Contributor: David Inglis
+//  app.js
+//  A node server within the Progress firewall for communicating with Hues
 
 // *** BEFORE ANY OF THIS WILL WORK: ***
 // go to http://developers.meethue.com/gettingstarted.html

@@ -2,9 +2,8 @@
 //  ViewController.m
 //  HueController
 //
-//  Created by David Inglis on 7/29/14.
-//  Copyright (c) 2014 dinglis. All rights reserved.
-//
+//  Copyright 2014 © Progress Software
+//  Contributor: David Inglis
 
 #import "ViewController.h"
 
